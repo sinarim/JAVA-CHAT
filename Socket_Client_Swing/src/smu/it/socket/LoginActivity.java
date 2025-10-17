@@ -142,10 +142,17 @@ public class LoginActivity extends JFrame {
             JSONObject mainObj = (JSONObject) obj.get("main");
             double temp = ((Number) mainObj.get("temp")).doubleValue();
 
-            // 아이콘 URL
-            String iconUrl = "https://openweathermap.org/img/wn/" + iconCode + "@2x.png";
-            java.awt.Image image = javax.imageio.ImageIO.read(new URL(iconUrl));
-            ImageIcon weatherIcon = new ImageIcon(image.getScaledInstance(100, 100, Image.SCALE_SMOOTH));
+
+         // ✅ 'n' 버전이 없으니까, d로 통일
+         if (iconCode.endsWith("n")) {
+             iconCode = iconCode.substring(0, 2) + "d";
+         }
+
+         // 로컬 images 폴더에서 아이콘 불러오기
+         String iconPath = "images/" + iconCode + ".png";
+         java.awt.Image image = javax.imageio.ImageIO.read(new java.io.File(iconPath));
+         ImageIcon weatherIcon = new ImageIcon(image.getScaledInstance(100, 100, Image.SCALE_SMOOTH));
+
 
             String html = String.format(
                 "<html><div style='text-align:center;'>"

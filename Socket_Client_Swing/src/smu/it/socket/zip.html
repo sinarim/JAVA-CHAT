@@ -1,37 +1,34 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>우편번호 검색</title>
-    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-</head>
-<body style="margin:0; padding:0; width:100%; height:100%;">
-    <div id="postcode" style="width:100%; height:100%;"></div>
-
-<input type="hidden" id="hiddenZonecode">
-<input type="hidden" id="hiddenAddress">
-
+<meta charset="UTF-8">
+<title>우편번호 검색</title>
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
 function execDaumPostcode() {
-    new daum.Postcode({
-        oncomplete: function(data) {
-            var addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
-
-            // hidden input에 저장
-            document.getElementById('hiddenZonecode').value = data.zonecode;
-            document.getElementById('hiddenAddress').value = addr;
-
-            // JavaConnector 바로 호출
-            if(window.javaConnector){
-                javaConnector.setZipcodeAndAddress(data.zonecode, addr);
-                javaConnector.log("선택됨: " + data.zonecode + ", " + addr);
+    if (typeof daum !== "undefined" && daum.Postcode) {
+        new daum.Postcode({
+            oncomplete: function(data) {
+                var addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
+                if(window.javaConnector){
+                    javaConnector.setZipcodeAndAddress(data.zonecode, addr);
+                    javaConnector.log("선택됨: "+data.zonecode+", "+addr);
+                }
             }
-        }
-    }).embed(document.getElementById('postcode'));
+        }).embed(document.getElementById('postcode'));
+    } else {
+        setTimeout(execDaumPostcode, 50); // 50ms 후 재시도
+    }
 }
-window.onload = execDaumPostcode;
+
+
+// 항상 로드 시 postcode 실행
+window.onload = function() {
+    execDaumPostcode();
+};
 </script>
-
-
+</head>
+<body style="margin:0; padding:0; width:100%; height:100%;">
+<div id="postcode" style="width:100%; height:100%;"></div>
 </body>
 </html>

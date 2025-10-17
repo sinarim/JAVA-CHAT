@@ -3,10 +3,9 @@ package smu.it.socket;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-
 import java.awt.*;
 import java.net.URL;
+import java.util.Date;
 
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
@@ -19,10 +18,7 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.concurrent.Worker;
 
-
-
 import netscape.javascript.JSObject;
-
 
 public class RegisterForm extends JFrame {
 
@@ -41,9 +37,8 @@ public class RegisterForm extends JFrame {
     public JTextField txtPhone2 = new JTextField();
     public JTextField txtPhone3 = new JTextField();
     public JTextField txtDetail = new JTextField();
-    
-    public static JTextField  txtZipcode = new JTextField();
-    public static JTextField txtAddress = new JTextField();
+    public JTextField txtZipcode = new JTextField();
+    public JTextField txtAddress = new JTextField();
     public JLabel lblPhotoPreview = new JLabel("", SwingConstants.CENTER);
 
     public JButton btnIdCheck = new JButton("중복 확인");
@@ -54,9 +49,19 @@ public class RegisterForm extends JFrame {
     public JButton btnBack = new JButton("뒤로 가기");
     public JButton btnZipcodeSearch = new JButton("우편번호");
 
-
+    // --- JavaFX 관련 필드 ---
+    private static boolean fxInitialized = false; // Toolkit 초기화 여부
+    private static JFXPanel fxPanel;
+    private static WebView webView;
+    private static WebEngine engine;
 
     public RegisterForm() {
+        // JavaFX Toolkit 초기화
+        if (!fxInitialized) {
+            new JFXPanel(); // 초기화용
+            fxInitialized = true;
+        }
+
         setTitle("회원가입");
         setSize(600, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -75,18 +80,14 @@ public class RegisterForm extends JFrame {
         JLabel lblPw = new JLabel("비밀번호:");
         lblPw.setBounds(30, 70, 80, 25);
         txtPw.setBounds(120, 70, 150, 25);
-        btnPwValidate.setBounds(280, 70, 100, 25);  // 비밀번호 입력 필드 옆에 위치시키기
-        
-        
-        
+        btnPwValidate.setBounds(280, 70, 100, 25);
 
         JLabel lblPwCheck = new JLabel("비밀번호 확인:");
         lblPwCheck.setBounds(30, 110, 100, 25);
         txtPwCheck.setBounds(120, 110, 150, 25);
         lblPwMatch.setBounds(280, 110, 80, 25);
         lblPwMatch.setForeground(Color.RED);
-        
-        // --- DocumentListener로 실시간 체크 ---
+
         DocumentListener pwListener = new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { updateMatch(); }
             public void removeUpdate(DocumentEvent e) { updateMatch(); }
@@ -122,13 +123,11 @@ public class RegisterForm extends JFrame {
         lblGender.setBounds(30, 270, 80, 25);
         cbGender.setBounds(120, 270, 80, 25);
 
- 
-     // --- 생년월일 ---
+        // --- 생년월일 ---
         JLabel lblBirth = new JLabel("생년월일:");
         lblBirth.setBounds(30, 310, 80, 25);
         txtBirth.setBounds(120, 310, 150, 25);
 
-        // --- 생년월일 달력 버튼 ---
         JButton btnPickDate = new JButton("선택");
         btnPickDate.setBounds(280, 310, 80, 25);
         btnPickDate.addActionListener(ev -> {
@@ -140,16 +139,13 @@ public class RegisterForm extends JFrame {
                     this, datePicker, "날짜 선택", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
             if(option == JOptionPane.OK_OPTION) {
-                java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+                Date selectedDate = (Date) datePicker.getModel().getValue();
                 if(selectedDate != null) {
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-                    System.out.println(selectedDate);
                     txtBirth.setText(sdf.format(selectedDate));
                 }
             }
         });
-  
-
 
         // --- 전화번호 ---
         JLabel lblPhone = new JLabel("전화번호:");
@@ -175,52 +171,26 @@ public class RegisterForm extends JFrame {
         txtDetail.setBounds(120, 470, 300, 25);
 
         // --- 프로필 사진 ---
-//        JLabel lblPhoto = new JLabel("프로필 사진");
-//        lblPhoto.setBounds(420, 30, 100, 25);
-//        lblPhotoPreview.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-//        lblPhotoPreview.setBounds(400, 60, 150, 150);
-//        btnUpload.setBounds(420, 220, 110, 25);
-        
-     // --- 프로필 사진 패널 ---
-        JPanel photoPanel = new JPanel();
-        photoPanel.setLayout(new BorderLayout());
-        photoPanel.setBounds(400, 30, 150, 180); // 전체 영역
-
-       // JLabel lblPhoto = new JLabel("프로필 사진", SwingConstants.CENTER);
+        JPanel photoPanel = new JPanel(new BorderLayout());
+        photoPanel.setBounds(400, 30, 150, 180);
         lblPhotoPreview.setText("사진 없음");
         lblPhotoPreview.setHorizontalAlignment(SwingConstants.CENTER);
         lblPhotoPreview.setVerticalAlignment(SwingConstants.CENTER);
         lblPhotoPreview.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-
-        //photoPanel.add(lblPhoto, BorderLayout.NORTH);          // 위쪽에 텍스트
-        photoPanel.add(lblPhotoPreview, BorderLayout.CENTER);  // 가운데 미리보기
-
-        // --- 업로드 버튼은 패널 밖 아래에 ---
+        photoPanel.add(lblPhotoPreview, BorderLayout.CENTER);
         btnUpload.setBounds(420, 220, 110, 25);
-        
 
-        
-        
-
-        // --- panel에 추가 ---
         panel.add(photoPanel);
         panel.add(btnUpload);
-
-        
 
         // --- 회원가입/뒤로가기 버튼 ---
         btnRegister.setBounds(180, 520, 100, 30);
         btnBack.setBounds(300, 520, 100, 30);
-        
-     // 뒤로가기 버튼 클릭
-        btnBack.addActionListener(e -> {
-            // 현재 창 닫기
-            this.dispose();
 
-            // 로그인 창 열기
+        btnBack.addActionListener(e -> {
+            this.setVisible(false); // dispose() 대신 숨김
             SwingUtilities.invokeLater(() -> new LoginActivity().setVisible(true));
         });
-        
 
         // --- panel에 추가 ---
         panel.add(lblId); panel.add(txtId); panel.add(btnIdCheck);
@@ -232,25 +202,17 @@ public class RegisterForm extends JFrame {
         panel.add(lblGender); panel.add(cbGender);
         panel.add(lblBirth); panel.add(txtBirth);
         panel.add(lblPhone); panel.add(cbPhone); panel.add(txtPhone2); panel.add(txtPhone3);
-
         panel.add(lblZipcode); panel.add(txtZipcode); panel.add(btnZipcodeSearch);
         panel.add(lblAddress); panel.add(txtAddress);
         panel.add(lblDetail); panel.add(txtDetail);
         panel.add(btnPwValidate);
-       
         panel.add(btnRegister); panel.add(btnBack);
-        
         panel.add(btnPickDate);
 
-
         add(panel);
-        
-        
-        
-        
-        // --- 우편번호 버튼 클릭 시 모달 열기 ---
-        btnZipcodeSearch.addActionListener(e -> openZipcodePopup());
 
+        // --- 우편번호 버튼 클릭 시 팝업 ---
+        btnZipcodeSearch.addActionListener(e -> openZipcodePopup());
 
         setVisible(true);
     }
@@ -258,7 +220,6 @@ public class RegisterForm extends JFrame {
     private void updateMatch() {
         String pw1 = new String(txtPw.getPassword());
         String pw2 = new String(txtPwCheck.getPassword());
-
         int matchPercent = calculateMatchPercentage(pw1, pw2);
         lblPwMatch.setText(matchPercent + "%");
         lblPwMatch.setForeground(matchPercent == 100 ? Color.GREEN : Color.RED);
@@ -268,41 +229,34 @@ public class RegisterForm extends JFrame {
         if(a.isEmpty() || b.isEmpty()) return 0;
         int len = Math.min(a.length(), b.length());
         int matchCount = 0;
-        for(int i=0; i<len; i++) {
-            if(a.charAt(i) == b.charAt(i)) matchCount++;
-        }
+        for(int i=0; i<len; i++) if(a.charAt(i) == b.charAt(i)) matchCount++;
         int maxLen = Math.max(a.length(), b.length());
         return (int)((matchCount / (double) maxLen) * 100);
     }
 
-    
-    
     private void openZipcodePopup() {
         JDialog dialog = new JDialog(this, "우편번호 검색", true);
         dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
 
-        JFXPanel fxPanel = new JFXPanel();
+        JFXPanel fxPanel = new JFXPanel(); // 매번 새로 생성
         dialog.add(fxPanel);
 
         Platform.runLater(() -> {
-            WebView webView = new WebView();
+            WebView webView = new WebView();       // 새 WebView 생성
             WebEngine engine = webView.getEngine();
             engine.setJavaScriptEnabled(true);
 
             engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED) {
                     JSObject window = (JSObject) engine.executeScript("window");
-                    window.setMember("javaConnector", new JavaConnector(dialog));
-
-                    // Daum Postcode 실행
+                    window.setMember("javaConnector", new JavaConnector(dialog, this));
                     engine.executeScript("execDaumPostcode();");
                 }
             });
 
             URL url = getClass().getResource("/smu/it/socket/zip.html");
-            if (url != null) engine.load(url.toExternalForm());
-            else System.out.println("zip.html 파일을 찾을 수 없습니다.");
+            engine.load(url.toExternalForm() + "?t=" + System.currentTimeMillis());
 
             fxPanel.setScene(new Scene(webView));
         });
@@ -312,15 +266,18 @@ public class RegisterForm extends JFrame {
 
     public class JavaConnector {
         private JDialog dialog;
-        public JavaConnector(JDialog dialog) {
+        private RegisterForm parentForm;
+
+        public JavaConnector(JDialog dialog, RegisterForm parentForm) {
             this.dialog = dialog;
+            this.parentForm = parentForm;
         }
 
         public void setZipcodeAndAddress(String zonecode, String address) {
             SwingUtilities.invokeLater(() -> {
-                RegisterForm.txtZipcode.setText(zonecode);
-                RegisterForm.txtAddress.setText(address);
-                dialog.dispose(); // 팝업 닫기
+                parentForm.txtZipcode.setText(zonecode);
+                parentForm.txtAddress.setText(address);
+                dialog.dispose();
             });
         }
 
@@ -329,16 +286,7 @@ public class RegisterForm extends JFrame {
         }
     }
 
-
-
-
-
-    
-    
-
-
-        public static void main(String[] args) {
-            SwingUtilities.invokeLater(() -> new RegisterForm().setVisible(true));
-        }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new RegisterForm().setVisible(true));
     }
-
+}
